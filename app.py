@@ -59,7 +59,10 @@ with st.sidebar:
     except Exception:
         api_ok = False
     st.caption("🤖 Orchestrator rejimi:")
-    st.success("LLM (Claude) yoqilgan") if api_ok else st.info("Rule-based (API key yo'q)")
+    if api_ok:
+        st.success("LLM (Claude) yoqilgan")
+    else:
+        st.info("Rule-based (API key yo'q)")
 
     if st.button("🗑️ Chatni tozalash", width="stretch"):
         st.session_state.messages = []
