@@ -10,7 +10,7 @@
 import streamlit as st
 
 from data.mock_data import generate_data
-from agents.orchestrator import answer
+from agents.orchestrator import answer, _get_model
 from views import dashboard, sales, inventory, finance, hr
 
 st.set_page_config(
@@ -64,6 +64,7 @@ with st.sidebar:
     st.caption("🤖 Orchestrator rejimi:")
     if api_ok:
         st.success("LLM (Gemini) yoqilgan")
+        st.caption(f"Model: {_get_model()}")
     else:
         st.info("Rule-based (API key yo'q)")
 
