@@ -8,7 +8,7 @@ barcha sahifalar uchun umumiy AI chat (agent orchestrator).
 - **Har sahifada KPI metrics** (`st.columns` + `st.metric`) va alohida grafiklar
 - **Umumiy chat** — pastda, har qanday savol; orchestrator mos agent(lar)ga yo'naltiradi
 - **session_state** — navigatsiya va chat tarixi saqlanadi
-- **LLM ixtiyoriy** — Anthropic API key bo'lsa Claude javob beradi, bo'lmasa
+- **LLM ixtiyoriy** — Google Gemini API key bo'lsa Gemini javob beradi, bo'lmasa
   rule-based (ilova doim ishlaydi)
 
 ## Lokal ishga tushirish
@@ -19,15 +19,16 @@ streamlit run app.py
 Brauzerda `http://localhost:8501` ochiladi.
 
 ## (Ixtiyoriy) LLM rejimini yoqish
-`.streamlit/secrets.toml.example` ni nusxalab `.streamlit/secrets.toml` qiling:
+`.streamlit/secrets.toml.example` ni nusxalab `.streamlit/secrets.toml` qiling
+(API key Google AI Studio'dan bepul olinadi: https://aistudio.google.com/apikey):
 ```toml
-ANTHROPIC_API_KEY = "sk-ant-..."
+GEMINI_API_KEY = "AIza..."
 ```
 
 ## Streamlit Cloud'ga deploy
 1. Loyihani GitHub repozitoriyga yuklang (`secrets.toml`siz).
 2. https://share.streamlit.io → **New app** → repo + branch + `app.py`.
-3. (Ixtiyoriy) **Advanced settings → Secrets**ga `ANTHROPIC_API_KEY` qo' shing.
+3. (Ixtiyoriy) **Advanced settings → Secrets**ga `GEMINI_API_KEY` qo' shing.
 4. **Deploy** → live URL hosil bo'ladi.
 
 ## Struktura

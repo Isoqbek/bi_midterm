@@ -55,12 +55,15 @@ with st.sidebar:
 
     st.divider()
     try:
-        api_ok = "ANTHROPIC_API_KEY" in st.secrets
+        api_ok = any(
+            k in st.secrets and str(st.secrets[k]).strip()
+            for k in ("GEMINI_API_KEY", "GOOGLE_API_KEY")
+        )
     except Exception:
         api_ok = False
     st.caption("🤖 Orchestrator rejimi:")
     if api_ok:
-        st.success("LLM (Claude) yoqilgan")
+        st.success("LLM (Gemini) yoqilgan")
     else:
         st.info("Rule-based (API key yo'q)")
 

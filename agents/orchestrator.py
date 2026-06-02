@@ -3,8 +3,8 @@ Orchestrator: user savolini tegishli agent(lar)ga yo'naltiradi.
 
 Ishlash tartibi:
   1. Savoldagi kalit so'zlar bo'yicha mos agent(lar)ni tanlaydi.
-  2. Agar Anthropic API key mavjud bo'lsa -> LLM mos agentlar konteksti asosida
-     tabiiy, yaxlit javob yozadi.
+  2. Agar Google Gemini API key mavjud bo'lsa -> LLM mos agentlar konteksti
+     asosida tabiiy, yaxlit javob yozadi.
   3. Aks holda -> qoidaga asoslangan (rule-based) javoblarni birlashtiradi.
 
 Shu tariqa ilova API key BO'LMASA HAM to'liq ishlaydi (deploy uchun muhim).
@@ -12,16 +12,39 @@ Shu tariqa ilova API key BO'LMASA HAM to'liq ishlaydi (deploy uchun muhim).
 import os
 from agents.specialists import ALL_AGENTS
 
+DEFAULT_MODEL = "gemini-2.5-flash"
+
 
 def _get_api_key():
-    # Streamlit secrets -> environment -> None
+    """Streamlit secrets -> environment -> None.
+
+    GEMINI_API_KEY yoki GOOGLE_API_KEY o'qiladi. Bo'sh (faqat probel) qiymat
+    'yo'q' deb hisoblanadi, shunda ilova rule-based rejimga o'tadi.
+    """
+    names = ("GEMINI_API_KEY", "GOOGLE_API_KEY")
     try:
         import streamlit as st
-        if "ANTHROPIC_API_KEY" in st.secrets:
-            return st.secrets["ANTHROPIC_API_KEY"]
+        for name in names:
+            if name in st.secrets and str(st.secrets[name]).strip():
+                return st.secrets[name]
     except Exception:
         pass
-    return os.environ.get("ANTHROPIC_API_KEY")
+    for name in names:
+        val = os.environ.get(name)
+        if val and val.strip():
+            return val
+    return None
+
+
+def _get_model():
+    """st.secrets'dan GEMINI_MODEL, aks holda DEFAULT_MODEL."""
+    try:
+        import streamlit as st
+        if "GEMINI_MODEL" in st.secrets and str(st.secrets["GEMINI_MODEL"]).strip():
+            return st.secrets["GEMINI_MODEL"]
+    except Exception:
+        pass
+    return DEFAULT_MODEL
 
 
 def route(query: str):
@@ -35,8 +58,10 @@ def route(query: str):
 
 def _llm_answer(query: str, agents, data, api_key: str) -> str | None:
     try:
-        from anthropic import Anthropic
-        client = Anthropic(api_key=api_key)
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=api_key)
         context = "\n".join(a.context(data) for a in agents)
         system = (
             "Sen 'Business Intelligence Orchestrator'san. Quyidagi kompaniya "
@@ -44,27 +69,20 @@ def _llm_answer(query: str, agents, data, api_key: str) -> str | None:
             "asoslangan javob ber. Faqat berilgan ma'lumotlardan foydalan, "
             "ma'lumot yo'q bo'lsa ochiq ayt. O'zbek tilida javob ber."
         )
-        model = "claude-sonnet-4-20250514"
-        try:
-            import streamlit as st
-            model = st.secrets.get("ANTHROPIC_MODEL", model)
-        except Exception:
-            pass
-
-        resp = client.messages.create(
-            model=model,
-            max_tokens=700,
-            system=system,
-            messages=[{
-                "role": "user",
-                "content": f"KOMPANIYA MA'LUMOTLARI:\n{context}\n\nSAVOL: {query}",
-            }],
+        resp = client.models.generate_content(
+            model=_get_model(),
+            contents=f"KOMPANIYA MA'LUMOTLARI:\n{context}\n\nSAVOL: {query}",
+            config=types.GenerateContentConfig(
+                system_instruction=system,
+                max_output_tokens=700,
+                temperature=0.3,
+            ),
         )
-        parts = [b.text for b in resp.content if getattr(b, "type", "") == "text"]
-        return "\n".join(parts).strip() or None
-    except Exception as e:
-        # Har qanday xatoda -> fallback. (model, kvota, tarmoq va h.k.)
-        return f"⚠️ LLM DEBUG: {type(e).__name__}: {e}"
+        text = (resp.text or "").strip()
+        return text or None
+    except Exception:
+        # Har qanday xatoda -> jim fallback (model, kvota, tarmoq va h.k.)
+        return None
 
 
 def answer(query: str, data) -> dict:
