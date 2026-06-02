@@ -64,7 +64,7 @@ def _llm_answer(query: str, agents, data, api_key: str) -> str | None:
         return "\n".join(parts).strip() or None
     except Exception as e:
         # Har qanday xatoda -> fallback. (model, kvota, tarmoq va h.k.)
-        return None
+        return f"⚠️ LLM DEBUG: {type(e).__name__}: {e}"
 
 
 def answer(query: str, data) -> dict:
