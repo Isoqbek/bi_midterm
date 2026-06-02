@@ -74,7 +74,7 @@ def _llm_answer(query: str, agents, data, api_key: str) -> str | None:
             contents=f"KOMPANIYA MA'LUMOTLARI:\n{context}\n\nSAVOL: {query}",
             config=types.GenerateContentConfig(
                 system_instruction=system,
-                max_output_tokens=700,
+                max_output_tokens=2048,
                 temperature=0.3,
             ),
         )
